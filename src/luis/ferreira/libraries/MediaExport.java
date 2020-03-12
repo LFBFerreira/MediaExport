@@ -66,6 +66,10 @@ public class MediaExport {
 
     // -----------------------------------------------------------------------------------------------------------------
 
+    /**
+     * Sets a new output folder
+     * @param path
+     */
     public void setOutputFolder(String path) {
         File directory = new File(path);
         if (!directory.exists()) {
@@ -75,10 +79,25 @@ public class MediaExport {
         outputFolderPath = directory.getAbsolutePath();
     }
 
+    /**
+     * Sets a new output folder
+     * @param path
+     */
+    public void setOutputFolder(Path path) {
+        setOutputFolder(path.toAbsolutePath().toString());
+    }
+
+    /**
+     * Tells if there is an active recording or not
+     * @return
+     */
     public boolean isRecording() {
         return isRecording;
     }
 
+    /**
+     * Saves the current frame
+     */
     public void saveFrame() {
         if (!isRecording) {
             return;
@@ -86,6 +105,9 @@ public class MediaExport {
         videoExport.saveFrame();
     }
 
+    /**
+     * Start a video recording, or pauses an active recording
+     */
     public void toggleVideoRecording() {
         LocalDateTime now = LocalDateTime.now();
 
@@ -106,6 +128,9 @@ public class MediaExport {
         System.out.println(String.format("Video recording is %s", isRecording ? "On" : "Off"));
     }
 
+    /**
+     * Stops an active recordings and saves the file
+     */
     public void endCapture() {
         if (!isVideoInitialized) {
             System.out.println("There is no video being recorded");
@@ -119,6 +144,9 @@ public class MediaExport {
         videoExport.endMovie();
     }
 
+    /**
+     * Saves a screenshot
+     */
     public void takeScreenshot() {
         LocalDateTime now = LocalDateTime.now();
         String filename = String.format("screenshot %s.%s", now.format(dateTimeFormatter), screenshotExportFormat);
@@ -138,6 +166,11 @@ public class MediaExport {
         video.setQuality(videoExportQuality, 0);
     }
 
+    /**
+     * concats the output folder and the media file name
+     * @param filename
+     * @return
+     */
     private String getMediaFullPath(String filename)
     {
         Path fullPath;
@@ -154,6 +187,11 @@ public class MediaExport {
         return fullPath.toAbsolutePath().toString();
     }
 
+    /**
+     * Removes a eventual dot from the providede extension
+     * @param extension
+     * @return
+     */
     private String removeDot(String extension) {
         if (extension.charAt(0) == '.' && extension.length() > 2) {
             return extension.substring(1);

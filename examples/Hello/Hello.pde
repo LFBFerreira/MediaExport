@@ -6,8 +6,6 @@ MediaExport mediaExport;
 public void setup() {
     size(300, 200, PConstants.P2D);
     mediaExport = new MediaExport(100, 30, ".mp4", "png", this);
-
-    //mediaExport.setOutputFolder("C:\\Users\\luisf\\Downloads");
 }
 
 
