@@ -28,6 +28,8 @@ public class MediaExport {
     private String recordingName = "";
     private String outputFolderPath = "";
 
+    private boolean takeScreenshot = false;
+
     /**
      * Main constructor
      *
@@ -99,6 +101,12 @@ public class MediaExport {
      * Saves the current frame
      */
     public void saveFrame() {
+        if (takeScreenshot)
+        {
+            takeScreenshot();
+            takeScreenshot = false;
+        }
+
         if (!isRecording) {
             return;
         }
@@ -155,6 +163,24 @@ public class MediaExport {
         parent.save(fullPath);
 
         System.out.println(String.format("Screenshot saved the to '%s'", fullPath));
+    }
+
+    public void takeScreenshotDelayed()
+    {
+        takeScreenshot = true;
+    }
+
+    private void takeScreenshotOnDraw()
+    {
+        LocalDateTime now = LocalDateTime.now();
+        String filename = String.format("screenshot %s.%s", now.format(dateTimeFormatter), screenshotExportFormat);
+        String fullPath = getMediaFullPath(filename);
+
+        parent.save(fullPath);
+
+        System.out.println(String.format("Screenshot saved the to '%s'", fullPath));
+
+        takeScreenshot = false;
     }
 
     // -----------------------------------------------------------------------------------------------------------------
