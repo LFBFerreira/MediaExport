@@ -1,21 +1,21 @@
-import luis.ferreira.libraries.*;
-import com.hamoid.*;
+import luis.ferreira.libraries.media.*;
+import com.hamoid.VideoExport;
 
 MediaExport mediaExport;
 
-public void setup() {
+void setup() {
     size(300, 200, PConstants.P2D);
     mediaExport = new MediaExport(100, 30, ".mp4", "png", this);
 }
 
 
-public void draw() {
+void draw() {
     background(frameCount % 255);
     mediaExport.saveFrame();
 }
 
 
-public void keyPressed() {
+void keyPressed() {
     switch (keyCode) {
     case 97: // F1
     mediaExport.toggleVideoRecording();

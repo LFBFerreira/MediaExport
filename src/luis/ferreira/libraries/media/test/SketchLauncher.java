@@ -1,4 +1,4 @@
-package luis.ferreira.libraries.test;
+package luis.ferreira.libraries.media.test;
 
 import java.io.File;
 import java.io.IOException;

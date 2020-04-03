@@ -1,13 +1,8 @@
-package luis.ferreira.libraries.test;
+package luis.ferreira.libraries.media.test;
 
-import com.hamoid.VideoExport;
-import luis.ferreira.libraries.MediaExport;
+import luis.ferreira.libraries.media.MediaExport;
 import processing.core.PApplet;
 import processing.core.PConstants;
-
-import java.io.File;
-import java.nio.file.Paths;
-import java.time.format.DateTimeFormatter;
 
 public class TestSketch extends PApplet {
 
@@ -21,7 +16,6 @@ public class TestSketch extends PApplet {
 
     public void setup() {
         mediaExport = new MediaExport(100, 30, ".mp4", "png", this);
-        //mediaExport.setOutputFolder(Paths.get(this.sketchPath(),  "output"));
     }
 
 

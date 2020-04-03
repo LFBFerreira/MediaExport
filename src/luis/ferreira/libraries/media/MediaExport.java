@@ -1,6 +1,6 @@
-package luis.ferreira.libraries;
+package luis.ferreira.libraries.media;
 
-import com.hamoid.VideoExport;
+import com.hamoid.*;
 import processing.core.*;
 
 import java.io.File;
@@ -165,7 +165,7 @@ public class MediaExport {
         System.out.println(String.format("Screenshot saved the to '%s'", fullPath));
     }
 
-    public void takeScreenshotDelayed()
+    public void takeScreenshotOnSaveFrame()
     {
         takeScreenshot = true;
     }
