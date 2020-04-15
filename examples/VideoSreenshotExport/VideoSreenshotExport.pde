@@ -1,3 +1,15 @@
+/**
+ * The basic functions of this library are shown in this example, where you can start and pause a video recording,
+ * take a screenshot, and export both with automated names.
+ * Two screenshot modes are available, one where the screen is saved immediately, and another during the next draw cycle.
+ * The first mode is compatible with most uses, but some structures might require the later.
+ *
+ * Press F1 to start/pause a video recording
+ * Press F2 to stop the video recording and export it
+ * Press F3 to take a screenshot immediately
+ * Press F4 to take a screenshot at the end of the next Draw cycle
+ */
+
 import com.hamoid.*;
 import luis.ferreira.libraries.media.MediaExport;
 

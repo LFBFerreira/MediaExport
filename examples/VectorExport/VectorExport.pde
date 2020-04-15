@@ -1,3 +1,10 @@
+/**
+ * Export the drawing as vector shapes, to a PDF file.
+ * This works different then screenshots or videos, where the image buffer can be exported at the end of the sketch.
+ * In this mode the export needs to be activated before any drawing.
+ *
+ * Press F1 to export
+ */
 
 import luis.ferreira.libraries.media.MediaExport;
 import processing.pdf.*;

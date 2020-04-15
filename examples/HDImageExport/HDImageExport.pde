@@ -1,3 +1,10 @@
+/**
+ * Sketch that exports an image from an independent image buffer, using PGraphics.
+ * This new buffer can be of any size, also bigger then your sketch's size, allowing you to run a sketch in
+ * low resolution and export in an image in a higher resolution
+ *
+ * Press F1 to save a 2000 x 1000 screenshot of the sketch
+ */
 
 import luis.ferreira.libraries.media.*;
 

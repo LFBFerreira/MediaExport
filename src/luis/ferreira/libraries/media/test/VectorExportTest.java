@@ -5,7 +5,12 @@ import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 
-
+/**
+ * Export the drawing as vector shapes, to a PDF file.
+ * This works different then screenshots or videos, where the image buffer can be exported at the end of the sketch.
+ * In this mode the export needs to be activated before any drawing.
+ * Press F1 to export
+ */
 public class VectorExportTest extends PApplet {
     MediaExport mediaExport;
     boolean capture = false;
