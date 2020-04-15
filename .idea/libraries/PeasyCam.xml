@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="PeasyCam">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../Processing/libraries/peasycam/library/peasy-math.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../Processing/libraries/peasycam/library/peasycam.jar!/" />
+      <root url="file://$PROJECT_DIR$/../../Processing/libraries/peasycam/library" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="file://$PROJECT_DIR$/../../Processing/libraries/peasycam/reference" />
+    </JAVADOC>
+    <SOURCES />
+    <jarDirectory url="file://$PROJECT_DIR$/../../Processing/libraries/peasycam/library" recursive="false" />
+  </library>
+</component>

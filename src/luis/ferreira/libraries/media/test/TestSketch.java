@@ -28,7 +28,7 @@ public class TestSketch extends PApplet {
 
     public void draw() {
         if (capture) {
-            mediaExport.startPdfCatpure();
+            //mediaExport.startPdfCatpure();
 
             background(frameCount % 255);
             fillSketch();

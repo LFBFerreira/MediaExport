@@ -16,5 +16,6 @@
     <orderEntry type="library" name="VideoExport-0.2.3" level="project" />
     <orderEntry type="library" name="ant-1.5" level="project" />
     <orderEntry type="library" name="PDF" level="project" />
+    <orderEntry type="library" name="PeasyCam" level="project" />
   </component>
 </module>

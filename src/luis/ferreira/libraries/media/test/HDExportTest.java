@@ -5,7 +5,7 @@ import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 
-public class hdExportTest extends PApplet {
+public class HDExportTest extends PApplet {
 
     MediaExport mediaExport;
     boolean capture = false;
@@ -19,7 +19,7 @@ public class hdExportTest extends PApplet {
     public void setup() {
         mediaExport = new MediaExport(100, 30, ".mp4", "png", "pdf", this);
         mediaExport.setOutputFolder(sketchPath());
-        mediaExport.setHDBufferSize(2000, 1000, P2D);
+        mediaExport.setHDGraphicsSize(2000, 1000, P2D);
 
         fillSketch(g);
     }
@@ -36,8 +36,8 @@ public class hdExportTest extends PApplet {
         // draw more stuff
 
         if (capture) {
-            mediaExport.exportHDBuffer();
-            mediaExport.disposeHDBuffer();
+            mediaExport.exportHDGraphics();
+            mediaExport.disposeHDGraphics();
             capture = false;
         }
     }

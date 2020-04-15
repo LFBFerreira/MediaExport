@@ -1,6 +1,7 @@
 package luis.ferreira.libraries.media;
 
 import com.hamoid.*;
+import peasy.PeasyCam;
 import processing.core.*;
 
 import java.io.File;
@@ -10,6 +11,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import processing.pdf.*;
+
+import static processing.core.PConstants.*;
 
 public class MediaExport {
 
@@ -28,15 +31,14 @@ public class MediaExport {
     private int videoExportQuality = 0;
     private String videoExportFormat = "";
     private String screenshotExportFormat = "";
-    private String pdfExportFormat = "";
+    private String vectorExportFormat = "";
     private String recordingName = "";
     private String outputFolderPath = "";
 
     private boolean screenshotOnDraw = false;
-    private boolean capturingPDF = false;
-    private int pdfFrameBuffer = 0;
 
     private PGraphics hdBuffer;
+    private PGraphicsPDF vectorBuffer;
     private int hdBufferWidth = 0;
     private int hdBufferHeight = 0;
     private String hdBufferRenderer;
@@ -52,7 +54,7 @@ public class MediaExport {
         this.videoExportQuality = quality;
         this.videoExportFormat = removeDot(videoFormat);
         this.screenshotExportFormat = removeDot(screenshotFormat);
-        this.pdfExportFormat = removeDot(pdfFormat);
+        this.vectorExportFormat = removeDot(pdfFormat);
     }
 
     /**
@@ -121,13 +123,6 @@ public class MediaExport {
         if (screenshotOnDraw) {
             takeScreenshot();
             screenshotOnDraw = false;
-        }
-
-        if (capturingPDF) {
-            pdfFrameBuffer--;
-            if (pdfFrameBuffer == 0) {
-                endPdfCapture();
-            }
         }
 
         if (isRecordingVideo) {
@@ -222,7 +217,7 @@ public class MediaExport {
             return null;
         }
 
-        System.out.println(String.format("Creating HD buffer of %dx%d (%s)",
+        System.out.println(String.format("Creating HD graphics of %dx%d (%s)",
                 hdBufferWidth,
                 hdBufferHeight,
                 hdBufferRenderer));
@@ -234,7 +229,7 @@ public class MediaExport {
         }
 
         if (optimizeStroke) {
-            hdBuffer.hint(PConstants.DISABLE_OPTIMIZED_STROKE);
+            hdBuffer.hint(DISABLE_OPTIMIZED_STROKE);
         }
 
         // needs to be cleared before use, otherwise output is empty
@@ -246,21 +241,21 @@ public class MediaExport {
         return hdBuffer;
     }
 
-    public void exportHDBuffer() {
-        String fullPath = getExportPath("hd");
+    public void exportHDGraphics() {
+        String fullPath = getExportPath("hd", screenshotExportFormat);
 
-        System.out.println(String.format("Saving HD buffer to '%s'", fullPath));
+        System.out.println(String.format("Saving HD graphics to '%s'", fullPath));
 
         hdBuffer.save(fullPath);
     }
 
-    public void setHDBufferSize(int width, int height, String renderer) {
+    public void setHDGraphicsSize(int width, int height, String renderer) {
         hdBufferWidth = width;
         hdBufferHeight = height;
         hdBufferRenderer = renderer;
     }
 
-    public void disposeHDBuffer() {
+    public void disposeHDGraphics() {
         System.out.println("Disposing of HD buffer.");
         hdBuffer.dispose();
         hdBuffer = null;
@@ -272,53 +267,29 @@ public class MediaExport {
 
     /**
      *
+     * @return
      */
-    public void startPdfCatpure() {
-        startPdfCapture(1);
-    }
+    public PGraphicsPDF getVectorGraphics() {
+        String fullPath = getExportPath("vector", vectorExportFormat);
 
-    /**
-     * @param numFrames
-     */
-    private void startPdfCapture(int numFrames) {
-        LocalDateTime now = LocalDateTime.now();
-        String filename = String.format("vector %s.%s", now.format(dateTimeFormatter), pdfExportFormat);
-        String fullPath = getMediaFullPath(filename);
+        System.out.println(String.format("Saving Vector graphics to '%s'", fullPath));
 
-        System.out.println(String.format("Starting PDF recording to '%s' (%d frame)", fullPath, numFrames));
+        vectorBuffer = (PGraphicsPDF) parent.beginRaw(PConstants.PDF, fullPath);
 
-        pdfFrameBuffer = numFrames;
+        vectorBuffer.hint(DISABLE_DEPTH_TEST);
+        vectorBuffer.hint(DISABLE_DEPTH_MASK);
+        vectorBuffer.hint(DISABLE_DEPTH_SORT);
 
-//        parent.beginRecord(PConstants.PDF, fullPath);
-
-        PGraphicsPDF pdf = (PGraphicsPDF) parent.beginRaw(PConstants.PDF, fullPath);
-
-        // set default Illustrator stroke styles and paint background rect.
-//        pdf.strokeJoin(PConstants.MITER);
-//        pdf.strokeCap(PConstants.SQUARE);
-//        pdf.fill(0);
-//        pdf.noStroke();
-        //pdf.rect(255, 255, parent.width, parent.height);
-
-        capturingPDF = true;
+        return vectorBuffer;
     }
 
     /**
      *
      */
-    public void endPdfCapture() {
+    public void exportVectorGraphics() {
         parent.endRaw();
 
-        capturingPDF = false;
-
-        System.out.println(String.format("PDF capture stoppped"));
-    }
-
-    /**
-     * @return
-     */
-    public boolean isCapturingPDF() {
-        return capturingPDF;
+        System.out.println(String.format("Vector graphics exported"));
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -330,9 +301,9 @@ public class MediaExport {
         video.setQuality(videoExportQuality, 0);
     }
 
-    private String getExportPath(String prefix) {
+    private String getExportPath(String rootname, String extension) {
         LocalDateTime now = LocalDateTime.now();
-        String filename = String.format("%s %s.%s", prefix, now.format(dateTimeFormatter), screenshotExportFormat);
+        String filename = String.format("%s %s.%s", rootname, now.format(dateTimeFormatter), extension);
         return getMediaFullPath(filename);
     }
 
