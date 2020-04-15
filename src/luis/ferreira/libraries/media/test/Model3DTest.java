@@ -1,17 +1,15 @@
 package luis.ferreira.libraries.media.test;
 
 import luis.ferreira.libraries.media.MediaExport;
-import peasy.PeasyCam;
+//import peasy.PeasyCam;
 import processing.core.*;
-
-import java.util.Map;
 
 public class Model3DTest extends PApplet {
     MediaExport mediaExport;
     boolean capture = false;
-    private final String MODEL_PATH = "C:\\Users\\luisf\\Dropbox\\Schuur Creations\\Projects\\Creative Coding\\Living Lab Gift\\models\\stratumseind obj\\stratum unordered.obj";
+    private final String MODEL_PATH = "";
     public PShape model;
-    private PeasyCam cam;
+    //private PeasyCam cam;
     private boolean lightOn = true;
 
     public void settings() {
@@ -21,12 +19,11 @@ public class Model3DTest extends PApplet {
 
 
     public void setup() {
-        mediaExport = new MediaExport(100, 30, ".mp4", "png", "pdf", this);
-        //mediaExport.setOutputFolder(sketchPath());
+        mediaExport = new MediaExport("png", "pdf", this);
 
         model = loadShape(MODEL_PATH);
 
-        cam = new PeasyCam(this, 150);
+        //cam = new PeasyCam(this, 150);
 
         initializeModelRecursive(model);
     }
@@ -37,14 +34,14 @@ public class Model3DTest extends PApplet {
         background(0);
 
         if (capture) {
-            imageBuffer = mediaExport.getVectorGraphics();
+            imageBuffer = mediaExport.initializeVectorGraphics();
             color(0);
         }
 
         if (lightOn) {
             lights();
         }
-        
+
         shape(model);
 
         if (capture) {

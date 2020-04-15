@@ -1,7 +1,6 @@
 package luis.ferreira.libraries.media;
 
 import com.hamoid.*;
-import peasy.PeasyCam;
 import processing.core.*;
 
 import java.io.File;
@@ -14,11 +13,17 @@ import processing.pdf.*;
 
 import static processing.core.PConstants.*;
 
+/**
+ * MediaExport simplifies the process of media creation in Processing. It can export screenshots, videos, vector graphics
+ * and a custom size image buffer.
+ */
 public class MediaExport {
 
     // Configuration
-    private final String DATE_TIME_FORMAT = "dd_MM_yyyy_HH_mm_ss";
-
+    private static String DATE_TIME_FORMAT = "dd_MM_yyyy-HH_mm_ss";
+    private static String DEFAULT_VIDEO_FORMAT = "mp4";
+    private static String DEFAULT_SCREENSHOT_FORMAT = "png";
+    private static String DEFAULT_VECTOR_FORMAT = "pdf";
     // variables
     private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
     private Boolean isVideoInitialized = false;
@@ -29,9 +34,10 @@ public class MediaExport {
 
     private int videoExportFramerate = 0;
     private int videoExportQuality = 0;
-    private String videoExportFormat = "";
-    private String screenshotExportFormat = "";
-    private String vectorExportFormat = "";
+    private String videoExportFormat = "mp4";
+    private String screenshotExportFormat = "png";
+    private String hdExportFormat = "png";
+    private String vectorExportFormat = "pdf";
     private String recordingName = "";
     private String outputFolderPath = "";
 
@@ -39,31 +45,83 @@ public class MediaExport {
 
     private PGraphics hdBuffer;
     private PGraphicsPDF vectorBuffer;
-    private int hdBufferWidth = 0;
-    private int hdBufferHeight = 0;
-    private String hdBufferRenderer;
+
+    // -----------------------------------------------------------------------------------------------------------------
 
     /**
      * Main constructor
      *
-     * @param parent
+     * @param quality          video quality 1-100
+     * @param framerate        video framerate
+     * @param videoFormat      video format
+     * @param screenshotFormat screenshot / HD format
+     * @param vectorFormat     vector format
+     * @param parent           parent sketch
      */
-    public MediaExport(int quality, int framerate, String videoFormat, String screenshotFormat, String pdfFormat, PApplet parent) {
+    public MediaExport(int quality, int framerate, String videoFormat, String screenshotFormat, String vectorFormat, PApplet parent) {
         this.parent = parent;
         this.videoExportFramerate = framerate;
         this.videoExportQuality = quality;
         this.videoExportFormat = removeDot(videoFormat);
         this.screenshotExportFormat = removeDot(screenshotFormat);
-        this.vectorExportFormat = removeDot(pdfFormat);
+        this.vectorExportFormat = removeDot(vectorFormat);
+
+        setOutputFolder(parent.sketchPath());
     }
 
     /**
-     * Constructor with default parameters. Quality 100, framerate 30, video MP4 and image PNG
+     * Video and screenshot constructor
+     *
+     * @param quality     video quality 1-100
+     * @param framerate   video framerate
+     * @param videoFormat video format
+     * @param parent      parent sketch
+     */
+    public MediaExport(int quality, int framerate, String videoFormat, String screenshotFormat, PApplet parent) {
+        this(quality, framerate, videoFormat, screenshotFormat, DEFAULT_VECTOR_FORMAT, parent);
+    }
+
+
+    /**
+     * Video constructor
+     *
+     * @param quality     video quality 1-100
+     * @param framerate   video framerate
+     * @param videoFormat video format
+     * @param parent      parent sketch
+     */
+    public MediaExport(int quality, int framerate, String videoFormat, PApplet parent) {
+        this(quality, framerate, videoFormat, DEFAULT_SCREENSHOT_FORMAT, DEFAULT_VECTOR_FORMAT, parent);
+    }
+
+    /**
+     * Screenshot / HD constructor
+     *
+     * @param screenshotFormat screenshot format
+     * @param parent           parent sketch
+     */
+    public MediaExport(String screenshotFormat, PApplet parent) {
+        this(100, 30, DEFAULT_VIDEO_FORMAT, screenshotFormat, DEFAULT_VECTOR_FORMAT, parent);
+    }
+
+
+    /**
+     * Screenshot / HD and vector constructor
+     *
+     * @param screenshotFormat screenshot format
+     * @param parent           parent sketch
+     */
+    public MediaExport(String screenshotFormat, String vectorFormat, PApplet parent) {
+        this(100, 30, DEFAULT_VIDEO_FORMAT, screenshotFormat, vectorFormat, parent);
+    }
+
+    /**
+     * Constructor with default parameters. Quality 100, framerate 30, video MP4, image PNG, vector PDF
      *
      * @param parent
      */
     public MediaExport(PApplet parent) {
-        this(100, 30, "mp4", "png", "pdf", parent);
+        this(100, 30, DEFAULT_VIDEO_FORMAT, DEFAULT_SCREENSHOT_FORMAT, DEFAULT_VECTOR_FORMAT, parent);
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -73,17 +131,18 @@ public class MediaExport {
      */
     public void dispose() {
         if (isVideoInitialized) {
-            endCapture();
+            exportVideo();
         }
 
-        videoExport.dispose();
+        disposeVideoBuffer();
+        disposeHDGraphics();
     }
 
 
     // -----------------------------------------------------------------------------------------------------------------
 
     /**
-     * Sets a new output folder
+     * Set the output folder
      *
      * @param path
      */
@@ -117,11 +176,11 @@ public class MediaExport {
     }
 
     /**
-     * Saves the current frame
+     * Saves the current frame to video or image if necessary
      */
-    public void saveFrame() {
+    public void updateMedia() {
         if (screenshotOnDraw) {
-            takeScreenshot();
+            captureScreenshotImmediate();
             screenshotOnDraw = false;
         }
 
@@ -135,14 +194,10 @@ public class MediaExport {
     // Video
 
     /**
-     * Start a video recording, or pauses an active recording
+     * Start a new video recording, or pauses an active recording
      */
     public void toggleVideoRecording() {
-        LocalDateTime now = LocalDateTime.now();
-
-        recordingName = String.format("recording %s.%s", now.format(dateTimeFormatter), videoExportFormat);
-
-        String fullPath = getMediaFullPath(recordingName);
+        String fullPath = getExportPath("video", videoExportFormat);
 
         if (!isVideoInitialized) {
             System.out.println(String.format("Starting video recording to '%s'", fullPath));
@@ -154,82 +209,94 @@ public class MediaExport {
 
         isRecordingVideo = !isRecordingVideo;
 
-        System.out.println(String.format("Video recording is %s", isRecordingVideo ? "On" : "Off"));
+        System.out.println(String.format("Video recording is %s", isRecordingVideo ? "On" : "Paused"));
     }
 
     /**
      * Stops an active recordings and saves the file
      */
-    public void endCapture() {
+    public void exportVideo() {
         if (!isVideoInitialized) {
-            System.out.println("There is no video being recorded");
+            System.out.println("There is no video being recorded.");
             return;
         }
 
+        System.out.println(String.format("Stoping recording and saving video."));
+
+        // reset control variables
         isVideoInitialized = false;
         isRecordingVideo = false;
 
-        System.out.println(String.format("Stoping recording and saving video."));
+        // export video
         videoExport.endMovie();
     }
 
+    /**
+     * Dispose of video buffer
+     */
+    public void disposeVideoBuffer() {
+        videoExport.dispose();
+    }
 
     // -----------------------------------------------------------------------------------------------------------------
 
     // Screenshots
 
-    public void takeScreenshotNextFrame() {
+    /**
+     * Saves a screenshot in the next saveFrame(...) call
+     */
+    public void captureScreenshotNextFrame() {
         screenshotOnDraw = true;
     }
 
     /**
-     * Saves a screenshot
+     * Saves a screenshot immediately
      */
-    public void takeScreenshot() {
-        LocalDateTime now = LocalDateTime.now();
-        String filename = String.format("screenshot %s.%s", now.format(dateTimeFormatter), screenshotExportFormat);
-        String fullPath = getMediaFullPath(filename);
+    public void captureScreenshotImmediate() {
+        String fullPath = getExportPath("screenshot", screenshotExportFormat);
+
+        System.out.println(String.format("Saving screenshot to '%s'", fullPath));
 
         parent.save(fullPath);
-
-        System.out.println(String.format("Screenshot saved the to '%s'", fullPath));
-    }
-
-    private void takeScreenshotOnDraw() {
-        LocalDateTime now = LocalDateTime.now();
-        String filename = String.format("screenshot %s.%s", now.format(dateTimeFormatter), screenshotExportFormat);
-        String fullPath = getMediaFullPath(filename);
-
-        parent.save(fullPath);
-
-        System.out.println(String.format("Screenshot saved the to '%s'", fullPath));
-
-        screenshotOnDraw = false;
     }
 
     // -----------------------------------------------------------------------------------------------------------------
 
     // HD export
 
-    public PGraphics getHDBuffer(int smoothStrength, boolean optimizeStroke) {
-        if (hdBufferWidth <= 0 || hdBufferHeight <= 0 || hdBufferRenderer.isEmpty()) {
+    /**
+     * Creates a new graphics buffer
+     *
+     * @param width          buffer width
+     * @param height         buffer height
+     * @param renderer       buffer renderer
+     * @param smoothStrength antialiasing strenght (2, 3, 4, or 8)
+     * @param optimizeStroke enables or disables OpenGL hint ENABLE_OPTIMIZED_STROKE
+     * @return
+     */
+    public PGraphics getHDGraphics(int width, int height, String renderer, int smoothStrength, boolean optimizeStroke) {
+        if (width <= 0 || height <= 0 || renderer.isEmpty()) {
             System.err.println("First set the image buffer size with 'setHDBufferSize(width, height, renderer)'");
             return null;
         }
 
-        System.out.println(String.format("Creating HD graphics of %dx%d (%s)",
-                hdBufferWidth,
-                hdBufferHeight,
-                hdBufferRenderer));
+        System.out.println(String.format("Creating HD graphics buffer of %dx%d (%s)",
+                width,
+                height,
+                renderer));
 
-        hdBuffer = parent.createGraphics(hdBufferWidth, hdBufferHeight, hdBufferRenderer);
+        hdBuffer = parent.createGraphics(width, height, renderer);
 
         if (smoothStrength > 0) {
             hdBuffer.smooth(smoothStrength);
         }
 
-        if (optimizeStroke) {
-            hdBuffer.hint(DISABLE_OPTIMIZED_STROKE);
+        if (renderer == P3D) {
+            if (optimizeStroke) {
+                hdBuffer.hint(ENABLE_OPTIMIZED_STROKE);
+            } else {
+                hdBuffer.hint(DISABLE_OPTIMIZED_STROKE);
+            }
         }
 
         // needs to be cleared before use, otherwise output is empty
@@ -241,6 +308,21 @@ public class MediaExport {
         return hdBuffer;
     }
 
+    /**
+     * Creates a new graphics buffer
+     *
+     * @param width    buffer width
+     * @param height   buffer height
+     * @param renderer buffer renderer
+     * @return
+     */
+    public PGraphics getHDGraphics(int width, int height, String renderer) {
+        return getHDGraphics(width, height, renderer, 0, false);
+    }
+
+    /**
+     * Export the contents of the HD graphics buffer
+     */
     public void exportHDGraphics() {
         String fullPath = getExportPath("hd", screenshotExportFormat);
 
@@ -249,12 +331,9 @@ public class MediaExport {
         hdBuffer.save(fullPath);
     }
 
-    public void setHDGraphicsSize(int width, int height, String renderer) {
-        hdBufferWidth = width;
-        hdBufferHeight = height;
-        hdBufferRenderer = renderer;
-    }
-
+    /**
+     * Clear HD graphics buffer
+     */
     public void disposeHDGraphics() {
         System.out.println("Disposing of HD buffer.");
         hdBuffer.dispose();
@@ -266,34 +345,39 @@ public class MediaExport {
     // Vector
 
     /**
+     * Creates a vector graphics buffer with beginRaw(...)
      *
      * @return
      */
-    public PGraphicsPDF getVectorGraphics() {
+    public PGraphicsPDF initializeVectorGraphics() {
         String fullPath = getExportPath("vector", vectorExportFormat);
 
         System.out.println(String.format("Saving Vector graphics to '%s'", fullPath));
 
         vectorBuffer = (PGraphicsPDF) parent.beginRaw(PConstants.PDF, fullPath);
 
-        vectorBuffer.hint(DISABLE_DEPTH_TEST);
-        vectorBuffer.hint(DISABLE_DEPTH_MASK);
-        vectorBuffer.hint(DISABLE_DEPTH_SORT);
+//        vectorBuffer.hint(DISABLE_DEPTH_TEST);
+//        vectorBuffer.hint(DISABLE_DEPTH_MASK);
+//        vectorBuffer.hint(DISABLE_DEPTH_SORT);
 
         return vectorBuffer;
     }
 
     /**
-     *
+     * Export the contents of the vector graphics buffer
      */
     public void exportVectorGraphics() {
         parent.endRaw();
-
-        System.out.println(String.format("Vector graphics exported"));
+        System.out.println(String.format("Vector graphics exported."));
     }
 
     // -----------------------------------------------------------------------------------------------------------------
 
+    /**
+     * Configure video properties
+     *
+     * @param video
+     */
     private void configureVideo(VideoExport video) {
         video.setFrameRate(videoExportFramerate);
         video.setDebugging(false);
@@ -301,6 +385,13 @@ public class MediaExport {
         video.setQuality(videoExportQuality, 0);
     }
 
+    /**
+     * Generates the file export path
+     *
+     * @param rootname
+     * @param extension
+     * @return
+     */
     private String getExportPath(String rootname, String extension) {
         LocalDateTime now = LocalDateTime.now();
         String filename = String.format("%s %s.%s", rootname, now.format(dateTimeFormatter), extension);
@@ -308,7 +399,7 @@ public class MediaExport {
     }
 
     /**
-     * concats the output folder and the media file name
+     * Joins the output folder and the media file name
      *
      * @param filename
      * @return
@@ -326,7 +417,7 @@ public class MediaExport {
     }
 
     /**
-     * Removes a eventual dot from the providede extension
+     * Removes the existing dot from the provided extension
      *
      * @param extension
      * @return

@@ -10,7 +10,7 @@ public class SketchLauncher {
 
     public static void main(String[] args){
 
-        TestSketch sketch = new TestSketch();
+        VideoAndScreenshotTest sketch = new VideoAndScreenshotTest();
 
         String sketchPath = "";
 

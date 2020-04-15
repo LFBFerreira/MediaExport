@@ -17,9 +17,8 @@ public class HDExportTest extends PApplet {
 
 
     public void setup() {
-        mediaExport = new MediaExport(100, 30, ".mp4", "png", "pdf", this);
+        mediaExport = new MediaExport("png", this);
         mediaExport.setOutputFolder(sketchPath());
-        mediaExport.setHDGraphicsSize(2000, 1000, P2D);
 
         fillSketch(g);
     }
@@ -29,7 +28,7 @@ public class HDExportTest extends PApplet {
         PGraphics imageBuffer = g;
 
         if (capture) {
-            imageBuffer = mediaExport.getHDBuffer(16, false);
+            imageBuffer = mediaExport.getHDGraphics(2000, 1000, P2D, 8, false);
             fillSketch(imageBuffer);
         }
 
