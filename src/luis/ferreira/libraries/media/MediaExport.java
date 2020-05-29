@@ -3,7 +3,9 @@ package luis.ferreira.libraries.media;
 import com.hamoid.*;
 import processing.core.*;
 
+import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -20,11 +22,15 @@ import static processing.core.PConstants.*;
 public class MediaExport {
 
     // Configuration
+
     private static String DATE_TIME_FORMAT = "dd_MM_yyyy-HH_mm_ss";
     private static String DEFAULT_VIDEO_FORMAT = "mp4";
     private static String DEFAULT_SCREENSHOT_FORMAT = "png";
     private static String DEFAULT_VECTOR_FORMAT = "pdf";
+    private static Boolean MEDIA_OPEN_AUTO = false;
+
     // variables
+
     private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
     private Boolean isVideoInitialized = false;
     private Boolean isRecordingVideo = false;
@@ -81,7 +87,6 @@ public class MediaExport {
         this(quality, framerate, videoFormat, screenshotFormat, DEFAULT_VECTOR_FORMAT, parent);
     }
 
-
     /**
      * Video constructor
      *
@@ -124,7 +129,9 @@ public class MediaExport {
         this(100, 30, DEFAULT_VIDEO_FORMAT, DEFAULT_SCREENSHOT_FORMAT, DEFAULT_VECTOR_FORMAT, parent);
     }
 
+
     // -----------------------------------------------------------------------------------------------------------------
+
 
     /**
      * Stops any ongoing recording and disposes of resources
@@ -140,6 +147,10 @@ public class MediaExport {
 
 
     // -----------------------------------------------------------------------------------------------------------------
+
+    public void setOpenMediaAuto(boolean auto) {
+        MEDIA_OPEN_AUTO = auto;
+    }
 
     /**
      * Set the output folder
@@ -180,7 +191,7 @@ public class MediaExport {
      */
     public void updateMedia() {
         if (screenshotOnDraw) {
-            captureScreenshotImmediate();
+            String path = captureScreenshotImmediate();
             screenshotOnDraw = false;
         }
 
@@ -252,12 +263,24 @@ public class MediaExport {
     /**
      * Saves a screenshot immediately
      */
-    public void captureScreenshotImmediate() {
+    public String captureScreenshotImmediate() {
         String fullPath = getExportPath("screenshot", screenshotExportFormat);
 
         System.out.println(String.format("Saving screenshot to '%s'", fullPath));
 
         parent.save(fullPath);
+
+        if (MEDIA_OPEN_AUTO) {
+            Desktop dt = Desktop.getDesktop();
+            try {
+                dt.open(new File(fullPath));
+            } catch (IOException e) {
+                System.err.println("Could not open the media automatically");
+                e.printStackTrace();
+            }
+        }
+
+        return fullPath;
     }
 
     // -----------------------------------------------------------------------------------------------------------------

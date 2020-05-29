@@ -27,14 +27,13 @@ public class VideoAndScreenshotTest extends PApplet {
     public void setup() {
         mediaExport = new MediaExport(100, 30, "mp4", "png", this);
         mediaExport.setOutputFolder(sketchPath());
-
+        mediaExport.setOpenMediaAuto(true);
         background(random(255));
         fillSketch();
     }
 
 
     public void draw() {
-
         mediaExport.updateMedia();
     }
 
