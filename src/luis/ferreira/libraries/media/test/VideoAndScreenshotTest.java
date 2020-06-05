@@ -19,13 +19,17 @@ public class VideoAndScreenshotTest extends PApplet {
 
     MediaExport mediaExport;
     boolean capture = false;
+    int frameRate = 30;
 
     public void settings() {
         size(300, 200, PConstants.P2D);
     }
 
     public void setup() {
-        mediaExport = new MediaExport(100, 30, "mp4", "png", this);
+        smooth(8);
+        frameRate(frameRate);
+
+        mediaExport = new MediaExport(100, frameRate, "mp4", "png", this);
         mediaExport.setOutputFolder(sketchPath());
         mediaExport.setOpenMediaAuto(true);
         background(random(255));
@@ -34,7 +38,6 @@ public class VideoAndScreenshotTest extends PApplet {
 
 
     public void draw() {
-        mediaExport.updateMedia();
     }
 
 
@@ -44,13 +47,10 @@ public class VideoAndScreenshotTest extends PApplet {
                 mediaExport.toggleVideoRecording();
                 break;
             case 98: // F2
-                mediaExport.exportVideo();
+                mediaExport.exportVideo(true);
                 break;
             case 99: // F3
-                mediaExport.captureScreenshotImmediate();
-                break;
-            case 100: // F4
-                mediaExport.captureScreenshotNextFrame();
+                mediaExport.captureScreenshot();
                 break;
         }
     }

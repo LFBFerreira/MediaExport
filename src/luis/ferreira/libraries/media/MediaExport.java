@@ -13,7 +13,6 @@ import java.time.format.DateTimeFormatter;
 
 import processing.pdf.*;
 
-import static processing.core.PConstants.*;
 
 /**
  * MediaExport simplifies the process of media creation in Processing. It can export screenshots, videos, vector graphics
@@ -23,7 +22,7 @@ public class MediaExport {
 
     // Configuration
 
-    private static String DATE_TIME_FORMAT = "dd_MM_yyyy-HH_mm_ss";
+    private static String DATE_TIME_FORMAT = "dd_MM_yyyy-HH_mm_ss_SS";
     private static String DEFAULT_VIDEO_FORMAT = "mp4";
     private static String DEFAULT_SCREENSHOT_FORMAT = "png";
     private static String DEFAULT_VECTOR_FORMAT = "pdf";
@@ -32,8 +31,9 @@ public class MediaExport {
     // variables
 
     private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
-    private Boolean isVideoInitialized = false;
-    private Boolean isRecordingVideo = false;
+    private boolean isVideoInitialized = false;
+    private boolean isRecordingVideo = false;
+    private boolean hdBufferActive = false;
     private File outputFolder;
     private VideoExport videoExport;
     private PApplet parent;
@@ -46,11 +46,14 @@ public class MediaExport {
     private String vectorExportFormat = "pdf";
     private String recordingName = "";
     private String outputFolderPath = "";
+    private String videoSavePath = "";
 
     private boolean screenshotOnDraw = false;
+    private boolean hdScreenshotOnDraw = false;
 
     private PGraphics hdBuffer;
     private PGraphicsPDF vectorBuffer;
+
 
     // -----------------------------------------------------------------------------------------------------------------
 
@@ -71,6 +74,9 @@ public class MediaExport {
         this.videoExportFormat = removeDot(videoFormat);
         this.screenshotExportFormat = removeDot(screenshotFormat);
         this.vectorExportFormat = removeDot(vectorFormat);
+
+        parent.registerMethod("pre", this);
+        parent.registerMethod("post", this);
 
         setOutputFolder(parent.sketchPath());
     }
@@ -109,7 +115,6 @@ public class MediaExport {
         this(100, 30, DEFAULT_VIDEO_FORMAT, screenshotFormat, DEFAULT_VECTOR_FORMAT, parent);
     }
 
-
     /**
      * Screenshot / HD and vector constructor
      *
@@ -138,13 +143,24 @@ public class MediaExport {
      */
     public void dispose() {
         if (isVideoInitialized) {
-            exportVideo();
+            exportVideo(true);
         }
 
-        disposeVideoBuffer();
-        disposeHDGraphics();
+        if (hdBufferActive) {
+            exportHDGraphics(true);
+        }
+
+//        disposeVideoBuffer();
+//        disposeHDGraphics();
     }
 
+    public void pre() {
+
+    }
+
+    public void post() {
+        updateMedia();
+    }
 
     // -----------------------------------------------------------------------------------------------------------------
 
@@ -189,9 +205,9 @@ public class MediaExport {
     /**
      * Saves the current frame to video or image if necessary
      */
-    public void updateMedia() {
+    private void updateMedia() {
         if (screenshotOnDraw) {
-            String path = captureScreenshotImmediate();
+            saveGraphics();
             screenshotOnDraw = false;
         }
 
@@ -208,11 +224,11 @@ public class MediaExport {
      * Start a new video recording, or pauses an active recording
      */
     public void toggleVideoRecording() {
-        String fullPath = getExportPath("video", videoExportFormat);
 
         if (!isVideoInitialized) {
-            System.out.println(String.format("Starting video recording to '%s'", fullPath));
-            videoExport = new VideoExport(parent, fullPath);
+            videoSavePath = getExportPath("video", videoExportFormat);
+            System.out.println(String.format("Starting video recording to '%s'", videoSavePath));
+            videoExport = new VideoExport(parent, videoSavePath);
             configureVideo(videoExport);
             videoExport.startMovie();
             isVideoInitialized = true;
@@ -226,7 +242,7 @@ public class MediaExport {
     /**
      * Stops an active recordings and saves the file
      */
-    public void exportVideo() {
+    public void exportVideo(boolean dispose) {
         if (!isVideoInitialized) {
             System.out.println("There is no video being recorded.");
             return;
@@ -240,13 +256,16 @@ public class MediaExport {
 
         // export video
         videoExport.endMovie();
-    }
 
-    /**
-     * Dispose of video buffer
-     */
-    public void disposeVideoBuffer() {
-        videoExport.dispose();
+        if (MEDIA_OPEN_AUTO) {
+            openMedia(new File(videoSavePath));
+        }
+
+        videoSavePath = "";
+
+        if (dispose) {
+            videoExport.dispose();
+        }
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -256,14 +275,14 @@ public class MediaExport {
     /**
      * Saves a screenshot in the next saveFrame(...) call
      */
-    public void captureScreenshotNextFrame() {
+    public void captureScreenshot() {
         screenshotOnDraw = true;
     }
 
     /**
      * Saves a screenshot immediately
      */
-    public String captureScreenshotImmediate() {
+    private String saveGraphics() {
         String fullPath = getExportPath("screenshot", screenshotExportFormat);
 
         System.out.println(String.format("Saving screenshot to '%s'", fullPath));
@@ -271,13 +290,7 @@ public class MediaExport {
         parent.save(fullPath);
 
         if (MEDIA_OPEN_AUTO) {
-            Desktop dt = Desktop.getDesktop();
-            try {
-                dt.open(new File(fullPath));
-            } catch (IOException e) {
-                System.err.println("Could not open the media automatically");
-                e.printStackTrace();
-            }
+            openMedia(new File(fullPath));
         }
 
         return fullPath;
@@ -293,14 +306,20 @@ public class MediaExport {
      * @param width          buffer width
      * @param height         buffer height
      * @param renderer       buffer renderer
-     * @param smoothStrength antialiasing strenght (2, 3, 4, or 8)
+     * @param smoothStrength antialiasing strenght (2 - 16)
      * @param optimizeStroke enables or disables OpenGL hint ENABLE_OPTIMIZED_STROKE
      * @return
      */
     public PGraphics getHDGraphics(int width, int height, String renderer, int smoothStrength, boolean optimizeStroke) {
-        if (width <= 0 || height <= 0 || renderer.isEmpty()) {
+        if (width <= 0 || height <= 0) {
             System.err.println("First set the image buffer size with 'setHDBufferSize(width, height, renderer)'");
             return null;
+        }
+
+        if (!renderer.equals(PConstants.P2D) && !renderer.equals(PConstants.P3D)) {
+            System.err.println("Unsuported renderer. Please use P2D or P3D");
+            return null;
+
         }
 
         System.out.println(String.format("Creating HD graphics buffer of %dx%d (%s)",
@@ -308,17 +327,17 @@ public class MediaExport {
                 height,
                 renderer));
 
-        hdBuffer = parent.createGraphics(width, height, renderer);
+        hdBuffer = parent.createGraphics(width, height, String.valueOf(renderer));
 
         if (smoothStrength > 0) {
             hdBuffer.smooth(smoothStrength);
         }
 
-        if (renderer == P3D) {
+        if (renderer.equals(PConstants.P3D)) {
             if (optimizeStroke) {
-                hdBuffer.hint(ENABLE_OPTIMIZED_STROKE);
+                hdBuffer.hint(PConstants.ENABLE_OPTIMIZED_STROKE);
             } else {
-                hdBuffer.hint(DISABLE_OPTIMIZED_STROKE);
+                hdBuffer.hint(PConstants.DISABLE_OPTIMIZED_STROKE);
             }
         }
 
@@ -327,6 +346,8 @@ public class MediaExport {
         hdBuffer.beginDraw();
         hdBuffer.clear();
         hdBuffer.endDraw();
+
+        hdBufferActive = true;
 
         return hdBuffer;
     }
@@ -346,21 +367,25 @@ public class MediaExport {
     /**
      * Export the contents of the HD graphics buffer
      */
-    public void exportHDGraphics() {
+    public void exportHDGraphics(boolean dispose) {
         String fullPath = getExportPath("hd", screenshotExportFormat);
 
-        System.out.println(String.format("Saving HD graphics to '%s'", fullPath));
+        System.out.println(String.format("Saving HD graphics"));
 
+        hdBuffer.endDraw();
         hdBuffer.save(fullPath);
-    }
 
-    /**
-     * Clear HD graphics buffer
-     */
-    public void disposeHDGraphics() {
-        System.out.println("Disposing of HD buffer.");
-        hdBuffer.dispose();
-        hdBuffer = null;
+        if (dispose) {
+            System.out.println("Disposing of HD buffer.");
+            hdBuffer.dispose();
+            hdBuffer = null;
+        }
+
+        System.out.println("Saved to: " + fullPath);
+
+        if (MEDIA_OPEN_AUTO) {
+            openMedia(new File(fullPath));
+        }
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -450,6 +475,27 @@ public class MediaExport {
             return extension.substring(1);
         } else {
             return extension;
+        }
+    }
+
+    /**
+     * @param file
+     */
+    private void openMedia(File file) {
+        if (!file.exists()) {
+            System.err.println("The file '" + "' doesn't exist");
+            return;
+        }
+
+        Desktop dt = Desktop.getDesktop();
+        try {
+            dt.open(file);
+        } catch (IOException e) {
+            System.err.println("Could not open the media automatically");
+            e.printStackTrace();
+        }catch (IllegalArgumentException e) {
+            System.err.println("Could not open the media automatically");
+            e.printStackTrace();
         }
     }
 }

@@ -23,8 +23,11 @@ public class HDExportTest extends PApplet {
 
 
     public void setup() {
+        frameRate(30);
+
         mediaExport = new MediaExport("png", this);
         mediaExport.setOutputFolder(sketchPath());
+        mediaExport.setOpenMediaAuto(true);
 
         fillSketch(g);
     }
@@ -34,15 +37,14 @@ public class HDExportTest extends PApplet {
         PGraphics imageBuffer = g;
 
         if (capture) {
-            imageBuffer = mediaExport.getHDGraphics(2000, 1000, P2D, 8, false);
+            imageBuffer = mediaExport.getHDGraphics(2000, 1000, PConstants.P2D, 16, true);
             fillSketch(imageBuffer);
         }
 
         // draw more stuff
 
         if (capture) {
-            mediaExport.exportHDGraphics();
-            mediaExport.disposeHDGraphics();
+            mediaExport.exportHDGraphics(false);
             capture = false;
         }
     }
