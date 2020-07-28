@@ -1,79 +1,83 @@
 /**
- * The basic functions of this library are shown in this example, where you can start and pause a video recording,
- * take a screenshot, and export both with automated names.
- * Two screenshot modes are available, one where the screen is saved immediately, and another during the next draw cycle.
- * The first mode is compatible with most uses, but some structures might require the later.
+ * Export the drawing as vector shapes, to a PDF file.
+ * This works different then screenshots or videos, where the image buffer can be exported at the end of the sketch.
+ * In this mode the export needs to be activated before any drawing.
  *
- * Press F1 to start/pause a video recording
- * Press F2 to stop the video recording and export it
- * Press F3 to take a screenshot immediately
- * Press F4 to take a screenshot at the end of the next Draw cycle
+ * Press F1 to export
  */
 
-import com.hamoid.*;
-import luis.ferreira.libraries.media.MediaExport;
+import space.luisferreira.media.MediaExport;
+import processing.pdf.*;
 
 
 MediaExport mediaExport;
 boolean capture = false;
 
 
-public void setup() {
-  size(300, 200, PConstants.P2D);
-  mediaExport = new MediaExport(100, 30, "mp4", "png", this);
+void setup() {
+  size(300, 200, P2D);
 
-  // optional
+
+  mediaExport = new MediaExport("pdf", this);
   mediaExport.setOutputFolder(sketchPath());
+  mediaExport.autoOpen(true);
 
-  background(random(255));
-  fillSketch();
+  fillSketch(g);
 }
 
 
 void draw() {
+  PGraphics imageBuffer = g;
+
+  if (capture) {
+    imageBuffer = mediaExport.initializeVectorGraphics();
+    fillSketch(imageBuffer);
+  }
+
   // draw more stuff
 
-  mediaExport.updateMedia();
+  if (capture) {
+    mediaExport.exportVectorGraphics();
+    capture = false;
+  }
 }
-
 
 void keyPressed() {
   switch (keyCode) {
   case 97: // F1
-    mediaExport.toggleVideoRecording();
-    break;
-  case 98: // F2
-    mediaExport.exportVideo();
-    break;
-  case 99: // F3
-    mediaExport.captureScreenshotImmediate();
-    break;
-  case 100: // F4
-    mediaExport.captureScreenshotNextFrame();
+    capture = true;
     break;
   }
 }
 
-void mouseReleased()
-{
-  fillSketch();
+void mousePressed() {
+  fillSketch(g);
 }
 
-void fillSketch() {
-  strokeWeight(0.5f);
-  stroke(255, 0, 0);
-  fill(random(255));
-  circle(random(0, width), random(0, height), 60);
+void fillSketch(PGraphics buffer) {
+  int width = buffer.width;
+  int height = buffer.height;
 
-  strokeWeight(2f);
-  stroke(0, 255, 0);
-  fill(random(255));
-  rect(random(0, width), random(0, height), 20, 80);
+  buffer.beginDraw();
 
-  strokeWeight(3.5f);
-  stroke(0, 0, 255);
-  fill(random(255));
-  triangle(random(0, width), random(0, height), 
+  buffer.background(random(255));
+
+  buffer.strokeWeight(random(10));
+  buffer.stroke(255, 0, 0);
+  buffer.fill(random(255));
+  buffer.circle(random(0, width), random(0, height), width / 2);
+
+  buffer.strokeWeight(random(10));
+  buffer.stroke(0, 255, 0);
+  buffer.fill(random(255));
+  buffer.rect(random(0, width), random(0, height), 20, width / 2);
+
+  buffer.strokeWeight(random(10));
+  buffer.stroke(0, 0, 255);
+  buffer.fill(random(255));
+  buffer.triangle(random(0, width), random(0, height), 
     random(0, width), random(0, height), 
     random(0, width), random(0, height));
+
+  buffer.endDraw();
 }

@@ -2,11 +2,13 @@
  * Sketch that exports an image from an independent image buffer, using PGraphics.
  * This new buffer can be of any size, also bigger then your sketch's size, allowing you to run a sketch in
  * low resolution and export in an image in a higher resolution
- *
  * Press F1 to save a 2000 x 1000 screenshot of the sketch
  */
 
-import luis.ferreira.libraries.media.*;
+import space.luisferreira.media.MediaExport;
+import com.hamoid.*;
+import processing.pdf.*;
+
 
 MediaExport mediaExport;
 boolean capture = false;
@@ -16,9 +18,8 @@ void setup() {
   size(300, 200, P2D);
 
   mediaExport = new MediaExport("png", this);
-  
-  // optional
   mediaExport.setOutputFolder(sketchPath());
+  mediaExport.autoOpen(true);
 
   fillSketch(g);
 }
@@ -28,18 +29,18 @@ void draw() {
   PGraphics imageBuffer = g;
 
   if (capture) {
-    imageBuffer = mediaExport.getHDGraphics(2000, 1000, P2D, 8, false);
+    imageBuffer = mediaExport.getHDGraphics(2000, 1000, PConstants.P2D, 16, true);
     fillSketch(imageBuffer);
   }
 
   // draw more stuff
 
   if (capture) {
-    mediaExport.exportHDGraphics();
-    mediaExport.disposeHDGraphics();
+    mediaExport.exportHDGraphics(false);
     capture = false;
   }
 }
+
 
 void keyPressed() {
   switch (keyCode) {
@@ -49,9 +50,11 @@ void keyPressed() {
   }
 }
 
+
 void mousePressed() {
   fillSketch(g);
 }
+
 
 void fillSketch(PGraphics buffer) {
   int width = buffer.width;

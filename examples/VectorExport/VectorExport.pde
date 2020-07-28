@@ -6,7 +6,7 @@
  * Press F1 to export
  */
 
-import luis.ferreira.libraries.media.MediaExport;
+import space.luisferreira.media.MediaExport;
 import processing.pdf.*;
 
 
@@ -15,10 +15,12 @@ boolean capture = false;
 
 
 void setup() {
-  size(300, 200, PConstants.P2D);
+  size(300, 200, P2D);
 
-  mediaExport = new MediaExport( "pdf", this);
+
+  mediaExport = new MediaExport("pdf", this);
   mediaExport.setOutputFolder(sketchPath());
+  mediaExport.autoOpen(true);
 
   fillSketch(g);
 }

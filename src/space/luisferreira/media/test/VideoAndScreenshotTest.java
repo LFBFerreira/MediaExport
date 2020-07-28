@@ -9,7 +9,7 @@ import processing.core.PConstants;
  * take a screenshot, and export both with automated names.
  * Two screenshot modes are available, one where the screen is saved immediately, and another during the next draw cycle.
  * The first mode is compatible with most uses, but some structures might require the later.
- *
+ * <p>
  * Press F1 to start/pause a video recording
  * Press F2 to stop the video recording and export it
  * Press F3 to take a screenshot immediately
@@ -26,12 +26,12 @@ public class VideoAndScreenshotTest extends PApplet {
     }
 
     public void setup() {
-        smooth(8);
         frameRate(frameRate);
 
         mediaExport = new MediaExport(100, frameRate, "mp4", "png", this);
         mediaExport.setOutputFolder(sketchPath());
-        mediaExport.setOpenMediaAuto(true);
+        mediaExport.autoOpen(true);
+
         background(random(255));
         fillSketch();
     }
@@ -55,8 +55,7 @@ public class VideoAndScreenshotTest extends PApplet {
         }
     }
 
-    public void mouseReleased()
-    {
+    public void mouseReleased() {
         fillSketch();
     }
 

@@ -27,7 +27,7 @@ public class HDExportTest extends PApplet {
 
         mediaExport = new MediaExport("png", this);
         mediaExport.setOutputFolder(sketchPath());
-        mediaExport.setOpenMediaAuto(true);
+        mediaExport.autoOpen(true);
 
         fillSketch(g);
     }

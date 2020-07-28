@@ -47,6 +47,7 @@ public class MediaExport {
     private String recordingName = "";
     private String outputFolderPath = "";
     private Path videoSavePath;
+    private Path vectorSavePath;
 
     private boolean screenshotOnDraw = false;
     private boolean hdScreenshotOnDraw = false;
@@ -75,7 +76,7 @@ public class MediaExport {
         this.screenshotExportFormat = removeDot(screenshotFormat);
         this.vectorExportFormat = removeDot(vectorFormat);
 
-        parent.registerMethod("pre", this);
+//        parent.registerMethod("pre", this);
         parent.registerMethod("post", this);
 
         setOutputFolder(parent.sketchPath());
@@ -155,22 +156,22 @@ public class MediaExport {
         if (hdBufferActive) {
             exportHDGraphics(true);
         }
-
-//        disposeVideoBuffer();
-//        disposeHDGraphics();
     }
 
-    public void pre() {
-
-    }
-
+    /**
+     * Executed after draw
+     */
     public void post() {
         updateMedia();
     }
 
     // -----------------------------------------------------------------------------------------------------------------
 
-    public void setOpenMediaAuto(boolean auto) {
+    /**
+     * Enables or disables the automatic openning of new media after its finished, with the default program
+     * @param auto
+     */
+    public void autoOpen(boolean auto) {
         MEDIA_OPEN_AUTO = auto;
     }
 
@@ -179,8 +180,8 @@ public class MediaExport {
      *
      * @param path
      */
-    public void setOutputFolder(String path) {
-        File directory = new File(path);
+    public void setOutputFolder(Path path) {
+        File directory = path.toFile();
         if (!directory.exists()) {
             directory.mkdirs();
         }
@@ -193,11 +194,13 @@ public class MediaExport {
      *
      * @param path
      */
-    public void setOutputFolder(Path path) {
-        setOutputFolder(path.toAbsolutePath().toString());
+    public void setOutputFolder(String path) {
+        setOutputFolder(Paths.get(path));
     }
 
     // -----------------------------------------------------------------------------------------------------------------
+
+    // Video
 
     /**
      * Tells if there is an active recording or not
@@ -207,24 +210,6 @@ public class MediaExport {
     public boolean isRecording() {
         return isRecordingVideo;
     }
-
-    /**
-     * Saves the current frame to video or image if necessary
-     */
-    private void updateMedia() {
-        if (screenshotOnDraw) {
-            saveGraphics();
-            screenshotOnDraw = false;
-        }
-
-        if (isRecordingVideo) {
-            videoExport.saveFrame();
-        }
-    }
-
-    // -----------------------------------------------------------------------------------------------------------------
-
-    // Video
 
     /**
      * Start a new video recording, or pauses an active recording
@@ -405,11 +390,11 @@ public class MediaExport {
      * @return
      */
     public PGraphicsPDF initializeVectorGraphics() {
-        Path fullPath = getExportPath("vector", vectorExportFormat);
+        vectorSavePath = getExportPath("vector", vectorExportFormat);
 
-        System.out.println(String.format("Saving Vector graphics to '%s'", fullPath));
+        System.out.println(String.format("Saving Vector graphics to '%s'", vectorSavePath.toAbsolutePath()));
 
-        vectorBuffer = (PGraphicsPDF) parent.beginRaw(PConstants.PDF, fullPath.toAbsolutePath().toString());
+        vectorBuffer = (PGraphicsPDF) parent.beginRaw(PConstants.PDF, vectorSavePath.toAbsolutePath().toString());
 
 //        vectorBuffer.hint(DISABLE_DEPTH_TEST);
 //        vectorBuffer.hint(DISABLE_DEPTH_MASK);
@@ -424,9 +409,31 @@ public class MediaExport {
     public void exportVectorGraphics() {
         parent.endRaw();
         System.out.println(String.format("Vector graphics exported."));
+
+        if (MEDIA_OPEN_AUTO && vectorSavePath != null) {
+            openMedia(vectorSavePath.toFile());
+        }
     }
 
+
     // -----------------------------------------------------------------------------------------------------------------
+
+    // Helpers
+
+    /**
+     * Saves the current frame to video or image if necessary
+     */
+    private void updateMedia() {
+        if (screenshotOnDraw) {
+            saveGraphics();
+            screenshotOnDraw = false;
+        }
+
+        if (isRecordingVideo) {
+            videoExport.saveFrame();
+        }
+    }
+
 
     /**
      * Configure video properties
@@ -472,7 +479,7 @@ public class MediaExport {
     }
 
     /**
-     * Removes the existing dot from the provided extension
+     * Removes the dot from the provided extension
      *
      * @param extension
      * @return
@@ -486,6 +493,7 @@ public class MediaExport {
     }
 
     /**
+     * Open the media file with the default program
      * @param file
      */
     private void openMedia(File file) {
@@ -497,10 +505,7 @@ public class MediaExport {
         Desktop dt = Desktop.getDesktop();
         try {
             dt.open(file);
-        } catch (IOException e) {
-            System.err.println("Could not open the media automatically");
-            e.printStackTrace();
-        } catch (IllegalArgumentException e) {
+        } catch (IOException | IllegalArgumentException e) {
             System.err.println("Could not open the media automatically");
             e.printStackTrace();
         }

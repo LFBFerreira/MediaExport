@@ -24,6 +24,7 @@ public class VectorExportTest extends PApplet {
     public void setup() {
         mediaExport = new MediaExport( "pdf", this);
         mediaExport.setOutputFolder(sketchPath());
+        mediaExport.autoOpen(true);
 
         fillSketch(g);
     }
