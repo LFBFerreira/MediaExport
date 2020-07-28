@@ -1,4 +1,4 @@
-package luis.ferreira.libraries.media.test;
+package space.luisferreira.media.test;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,6 +1,6 @@
-package luis.ferreira.libraries.media.test;
+package space.luisferreira.media.test;
 
-import luis.ferreira.libraries.media.MediaExport;
+import space.luisferreira.media.MediaExport;
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PGraphics;

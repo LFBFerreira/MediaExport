@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="library">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../../Processing/libraries/VideoExport/library" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="file://$PROJECT_DIR$/../../Processing/libraries/VideoExport/reference" />
+    </JAVADOC>
+    <SOURCES />
+    <jarDirectory url="file://$PROJECT_DIR$/../../Processing/libraries/VideoExport/library" recursive="false" />
+  </library>
+</component>

@@ -1,4 +1,4 @@
-package luis.ferreira.libraries.media;
+package space.luisferreira.media;
 
 import com.hamoid.*;
 import processing.core.*;
@@ -46,7 +46,7 @@ public class MediaExport {
     private String vectorExportFormat = "pdf";
     private String recordingName = "";
     private String outputFolderPath = "";
-    private String videoSavePath = "";
+    private Path videoSavePath;
 
     private boolean screenshotOnDraw = false;
     private boolean hdScreenshotOnDraw = false;
@@ -79,15 +79,21 @@ public class MediaExport {
         parent.registerMethod("post", this);
 
         setOutputFolder(parent.sketchPath());
+
+        if (parent.width % 2 != 0 || parent.height % 2 != 0) {
+            System.out.println("This resolution is not compatible with video recording. Width and height must be even.");
+        }
     }
+
 
     /**
      * Video and screenshot constructor
      *
-     * @param quality     video quality 1-100
-     * @param framerate   video framerate
-     * @param videoFormat video format
-     * @param parent      parent sketch
+     * @param quality
+     * @param framerate
+     * @param videoFormat
+     * @param screenshotFormat
+     * @param parent
      */
     public MediaExport(int quality, int framerate, String videoFormat, String screenshotFormat, PApplet parent) {
         this(quality, framerate, videoFormat, screenshotFormat, DEFAULT_VECTOR_FORMAT, parent);
@@ -227,9 +233,12 @@ public class MediaExport {
 
         if (!isVideoInitialized) {
             videoSavePath = getExportPath("video", videoExportFormat);
-            System.out.println(String.format("Starting video recording to '%s'", videoSavePath));
-            videoExport = new VideoExport(parent, videoSavePath);
+            System.out.println(String.format("Starting video recording to %s", videoSavePath));
+
+            videoExport = new VideoExport(parent, videoSavePath.toAbsolutePath().toString());
             configureVideo(videoExport);
+
+
             videoExport.startMovie();
             isVideoInitialized = true;
         }
@@ -258,10 +267,10 @@ public class MediaExport {
         videoExport.endMovie();
 
         if (MEDIA_OPEN_AUTO) {
-            openMedia(new File(videoSavePath));
+            openMedia(videoSavePath.toFile());
         }
 
-        videoSavePath = "";
+        //videoSavePath = null;
 
         if (dispose) {
             videoExport.dispose();
@@ -282,18 +291,16 @@ public class MediaExport {
     /**
      * Saves a screenshot immediately
      */
-    private String saveGraphics() {
-        String fullPath = getExportPath("screenshot", screenshotExportFormat);
+    private void saveGraphics() {
+        Path fullPath = getExportPath("screenshot", screenshotExportFormat);
 
-        System.out.println(String.format("Saving screenshot to '%s'", fullPath));
+        System.out.println(String.format("Saving screenshot to '%s'", fullPath.toAbsolutePath()));
 
-        parent.save(fullPath);
+        parent.save(fullPath.toAbsolutePath().toString());
 
         if (MEDIA_OPEN_AUTO) {
-            openMedia(new File(fullPath));
+            openMedia(fullPath.toFile());
         }
-
-        return fullPath;
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -368,12 +375,12 @@ public class MediaExport {
      * Export the contents of the HD graphics buffer
      */
     public void exportHDGraphics(boolean dispose) {
-        String fullPath = getExportPath("hd", screenshotExportFormat);
+        Path fullPath = getExportPath("hd", screenshotExportFormat);
 
         System.out.println(String.format("Saving HD graphics"));
 
         hdBuffer.endDraw();
-        hdBuffer.save(fullPath);
+        hdBuffer.save(fullPath.toAbsolutePath().toString());
 
         if (dispose) {
             System.out.println("Disposing of HD buffer.");
@@ -384,7 +391,7 @@ public class MediaExport {
         System.out.println("Saved to: " + fullPath);
 
         if (MEDIA_OPEN_AUTO) {
-            openMedia(new File(fullPath));
+            openMedia(fullPath.toFile());
         }
     }
 
@@ -398,11 +405,11 @@ public class MediaExport {
      * @return
      */
     public PGraphicsPDF initializeVectorGraphics() {
-        String fullPath = getExportPath("vector", vectorExportFormat);
+        Path fullPath = getExportPath("vector", vectorExportFormat);
 
         System.out.println(String.format("Saving Vector graphics to '%s'", fullPath));
 
-        vectorBuffer = (PGraphicsPDF) parent.beginRaw(PConstants.PDF, fullPath);
+        vectorBuffer = (PGraphicsPDF) parent.beginRaw(PConstants.PDF, fullPath.toAbsolutePath().toString());
 
 //        vectorBuffer.hint(DISABLE_DEPTH_TEST);
 //        vectorBuffer.hint(DISABLE_DEPTH_MASK);
@@ -440,7 +447,7 @@ public class MediaExport {
      * @param extension
      * @return
      */
-    private String getExportPath(String rootname, String extension) {
+    private Path getExportPath(String rootname, String extension) {
         LocalDateTime now = LocalDateTime.now();
         String filename = String.format("%s %s.%s", rootname, now.format(dateTimeFormatter), extension);
         return getMediaFullPath(filename);
@@ -452,7 +459,7 @@ public class MediaExport {
      * @param filename
      * @return
      */
-    private String getMediaFullPath(String filename) {
+    private Path getMediaFullPath(String filename) {
         Path fullPath;
 
         if (!outputFolderPath.isEmpty()) {
@@ -461,7 +468,7 @@ public class MediaExport {
             fullPath = Paths.get(parent.sketchPath(), filename);
         }
 
-        return fullPath.toAbsolutePath().toString();
+        return fullPath;
     }
 
     /**
@@ -493,7 +500,7 @@ public class MediaExport {
         } catch (IOException e) {
             System.err.println("Could not open the media automatically");
             e.printStackTrace();
-        }catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             System.err.println("Could not open the media automatically");
             e.printStackTrace();
         }

@@ -1,6 +1,6 @@
-package luis.ferreira.libraries.media.test;
+package space.luisferreira.media.test;
 
-import luis.ferreira.libraries.media.MediaExport;
+import space.luisferreira.media.MediaExport;
 //import peasy.PeasyCam;
 import processing.core.*;
 
