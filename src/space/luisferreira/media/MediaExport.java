@@ -22,7 +22,7 @@ public class MediaExport {
 
     // Configuration
 
-    private static String DATE_TIME_FORMAT = "dd_MM_yyyy-HH_mm_ss_SS";
+    private static String DATE_TIME_FORMAT = "dd_MM_yyyy_HH_mm_ss_SS";
     private static String DEFAULT_VIDEO_FORMAT = "mp4";
     private static String DEFAULT_SCREENSHOT_FORMAT = "png";
     private static String DEFAULT_VECTOR_FORMAT = "pdf";
